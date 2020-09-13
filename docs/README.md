@@ -122,17 +122,25 @@ We want to encapsulate Arduino and MFRC522 cards into a solid box. The connectio
 
 Here are the steps to encapsulate Arduino and MRFC522 into a 10.3x6.8x3.1cm box:
 
-![](img/soldering_arduino.jpeg)
-*Soldering on Arduino side*
+<figure>
+<img src="img/soldering_arduino.jpeg" />
+<figcaption>Soldering on Arduino side</figcaption>
+</figure>
 
-![](img/soldering_rc522.jpeg)
-*Soldering on MFRC522 side*
+<figure>
+<img src="img/soldering_rc522.jpeg" />
+<figcaption>Soldering on MFRC522 side</figcaption>
+</figure>
 
-![](img/side_view.jpeg)
-*Attach Arduino to the box by "cọc đồng"*
+<figure>
+<img src="img/side_view.jpeg" />
+<figcaption>Attach Arduino to the box by "cọc đồng"</figcaption>
+</figure>
 
-![](img/encapsulated.jpeg)
-*Finished box*
+<figure>
+<img src="img/encapsulated.jpeg" />
+<figcaption>Finished box</figcaption>
+</figure>
 
 ## Arduino sketch
 

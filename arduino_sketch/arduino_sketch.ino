@@ -5,7 +5,7 @@
 #define RST_PIN 9
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
-String reader_uid = "R1"; // TO BE CUSTOMIZED FOR EACH READER
+String reader_uid = "R3"; // TO BE CUSTOMIZED FOR EACH READER
 
 void setup()
 {
