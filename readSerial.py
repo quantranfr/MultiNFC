@@ -1,6 +1,7 @@
 # This script work with serial devices emitting one line of text at a time (Serial.println), at 9600 baud rate.
 
 from serial import Serial
+import serial.tools.list_ports
 import glob, time, sys
 
 def get_port():
@@ -9,9 +10,16 @@ def get_port():
     """
 
     # detect serial devices
-    ports = glob.glob('/dev/tty.usb*')
+    if sys.platform.startswith('linux'):
+        # a more precise way is to extract info from `dmesg | grep -E "tty.*USB|USB.*tty"`
+        ports = [port.device for port in serial.tools.list_ports.comports()]
+    elif sys.platform.startswith('darwin'): # MacOS
+        ports = glob.glob('/dev/tty.usb*')
+    else:
+        raise OSError("Not a Linux or MacOS machine. Abort.")
+
     if not len(ports):
-        raise IOError("no device detected")
+        raise IOError("No device detected. Abort.")
 
     # choice(s) of serial devices
     print('Available serial ports are:')
@@ -27,7 +35,7 @@ def get_port():
 if __name__ == "__main__":
     try:
         ports=get_port()
-    except (IOError, ValueError) as e:
+    except (IOError, ValueError, OSError) as e:
         print(e)
         sys.exit(1)
 
