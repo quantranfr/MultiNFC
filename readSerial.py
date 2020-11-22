@@ -2,6 +2,16 @@
 
 from serial import Serial
 import glob, time, sys
+import asyncio
+import websockets
+
+async def hello():
+    uri = "ws://localhost:9080"
+    async with websockets.connect(uri) as websocket:
+        name = input("What's your name? ")
+
+        await websocket.send(name)
+        print(f"> {name}")
 
 def get_port():
     """
@@ -25,6 +35,7 @@ def get_port():
         raise ValueError("wrong choice")
 
 if __name__ == "__main__":
+    asyncio.get_event_loop().run_until_complete(hello())
     try:
         ports=get_port()
     except (IOError, ValueError) as e:
