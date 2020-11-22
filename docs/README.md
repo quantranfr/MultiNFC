@@ -1,23 +1,23 @@
 # MULTI-NFC CARD READER - generalities
 
-Hệ thống này sẽ là công nghệ cơ sở cho một số mô hình phục vụ trưng bày.
+In today's market, most NFC Card reader can only read one card at a time. We propose to create a multi-card system, which will serve as a basis for future applications.
 
-## Vấn đề cần giải quyết
+## Use case example (to be translated into English)
 
 Tình huống đặt ra là người chơi cần giải quyết một câu đố liên quan đến việc chọn lựa, sắp xếp các đồ vật, và máy tính cần kiểm tra tính đúng đắn của lời giải đưa ra từ người chơi. Nếu người chơi tương tác với máy tính qua các thiết bị vào-ra chuẩn như bàn phím, con chuột, màn hình… thì việc kiểm tra lời giải thuần tuý thuộc lĩnh vực phần mềm. Tuy nhiên, do người chơi cần tương tác với các đồ vật thực, nên máy tính cần có khả năng nhận biết nhiều đồ vật một lúc một cách nhanh chóng, bao gồm cả vị trí của chúng.
 
-## Giới hạn vấn đề
+## Scope of work (to be translated into English)
 
-Đồ vật: có kích thước của các đồ vật thường được đặt lên bàn (bàn ăn, bàn làm việc, bàn thí nghiệm…), có đáy phẳng và tự đứng vững.
+About the objects: có kích thước của các đồ vật thường được đặt lên bàn (bàn ăn, bàn làm việc, bàn thí nghiệm…), có đáy phẳng và tự đứng vững.
 
-Vị trí (nếu câu đố có liên quan đến vị trí các đồ vật): các vị trí đều được xác định từ trước và có thể đặt trên đó từ 0 đến 1 đồ vật. Số lượng vị trí không quá 12.
+Target positions (nếu câu đố có liên quan đến vị trí các đồ vật): các vị trí đều được xác định từ trước và có thể đặt trên đó từ 0 đến 1 đồ vật. Số lượng vị trí không quá 12.
 
 Có hai cách để hệ thống đưa ra đánh giá, phụ thuộc vào luật chơi cụ thể:
 
-* Bằng tay: sau khi đặt các đồ vật vào vị trí mong muốn, người chơi xác nhận lựa chọn của mình thông qua một phím bấm “Xác nhận”.
-* Tự động: hệ thống sẽ đánh giá khi tất cả các vị trí đọc card được lấp đầy.
+* Manual: sau khi đặt các đồ vật vào vị trí mong muốn, người chơi xác nhận lựa chọn của mình thông qua một phím bấm “Xác nhận”.
+* Automatic: hệ thống sẽ đánh giá khi tất cả các vị trí đọc card được lấp đầy.
 
-Độ trễ nhận biết: máy tính cần nhận ra vật gì được đặt vào vị trí nào trong vòng ít hơn một phần mười hai giây, để người chơi có thể nhanh chóng thực hiện động tác tiếp theo.
+Detection delay: máy tính cần nhận ra vật gì được đặt vào vị trí nào trong vòng ít hơn một phần mười hai giây, để người chơi có thể nhanh chóng thực hiện động tác tiếp theo.
 
 Môi trường xung quanh: hệ thống nhận biết đồ vật cần hoạt động trong mọi điều kiện chiếu sáng.
 
@@ -156,8 +156,12 @@ There is a `requirements.txt` file to be `pip install`.
 
 Run the `.py` script and follow the steps. The script will detect automatically serial ports to be used.
 
-# Further improvement
+# Observation
 
-Use Arduino Nano instead of Arduino Uno:
+## About Arduino Nano
+
+Arduino Nano is interesting thank to its form factor, but currently I have bad experience with how the it handles the serial ports: it simply doesn't always respond (or maybe it's just the NFC reader? I will need to test more).
+
+Wiring for reference:
 
 ![](img/connection_with_nano.png)
