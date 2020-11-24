@@ -1,29 +1,37 @@
-# MULTI-NFC CARD READER - generalities
+# Multiple-objects detection system
 
-In today's market, most NFC Card reader can only read one card at a time. We propose to create a multi-card system, which will serve as a basis for future applications.
+## Motivation
 
-## Use case example (to be translated into English)
+In today's market, most NFC detection system can only read one card at a time to say it's valid or not. We propose to create a multi-card system, which will serve as a basic platform for various applications.
 
-Tình huống đặt ra là người chơi cần giải quyết một câu đố liên quan đến việc chọn lựa, sắp xếp các đồ vật, và máy tính cần kiểm tra tính đúng đắn của lời giải đưa ra từ người chơi. Nếu người chơi tương tác với máy tính qua các thiết bị vào-ra chuẩn như bàn phím, con chuột, màn hình… thì việc kiểm tra lời giải thuần tuý thuộc lĩnh vực phần mềm. Tuy nhiên, do người chơi cần tương tác với các đồ vật thực, nên máy tính cần có khả năng nhận biết nhiều đồ vật một lúc một cách nhanh chóng, bao gồm cả vị trí của chúng.
+A typical use case is a game of which the objective is to arrange objects in a desired order. Computer games like that are very common, but systems allowing interactions with real-world objects are not so. Such system need to recognize multiple objects at once, including their positions.
 
-## Scope of work (to be translated into English)
+To grasp the idea, play the video below featuring [a game](https://github.com/quantranfr/SortingGame) using this detection system:
 
-About the objects: có kích thước của các đồ vật thường được đặt lên bàn (bàn ăn, bàn làm việc, bàn thí nghiệm…), có đáy phẳng và tự đứng vững.
+[![](http://img.youtube.com/vi/1rLfiI8Qr10/0.jpg)](https://youtu.be/1rLfiI8Qr10)
 
-Target positions (nếu câu đố có liên quan đến vị trí các đồ vật): các vị trí đều được xác định từ trước và có thể đặt trên đó từ 0 đến 1 đồ vật. Số lượng vị trí không quá 12.
+## General constraints
 
-Có hai cách để hệ thống đưa ra đánh giá, phụ thuộc vào luật chơi cụ thể:
+The following conditions must be met for any project using this detection system:
 
-* Manual: sau khi đặt các đồ vật vào vị trí mong muốn, người chơi xác nhận lựa chọn của mình thông qua một phím bấm “Xác nhận”.
-* Automatic: hệ thống sẽ đánh giá khi tất cả các vị trí đọc card được lấp đầy.
+* Objects: having size of things that are normally found on a desktop (glass, card…) and having a flat base to stand on its own and to attach a NFC tag on it.
+* Target positions: up to, arbitrary say, 12 fix positions.
+* Detection delay: the detection must be fast enough to allow the player to take next actions. A "validation button" will slow down the process is therefore should not be allowed.
+* Environment: the detection system must work in any light condition.
 
-Detection delay: máy tính cần nhận ra vật gì được đặt vào vị trí nào trong vòng ít hơn một phần mười hai giây, để người chơi có thể nhanh chóng thực hiện động tác tiếp theo.
+## Pre-requisites
 
-Môi trường xung quanh: hệ thống nhận biết đồ vật cần hoạt động trong mọi điều kiện chiếu sáng.
+### Material
 
-## Schematic design
+To test out the system, we need to prepare:
 
-### Main design
+* At least 2 NFC card reader (MFRC522);
+* At least 2 Arduino (Nano, Uno, Mega…);
+* USB Hub if necessary, preferably with power supply;
+* 1 computer (eg. Raspberry Pi);
+* and corresponding cables.
+
+Overall wiring diagram:
 
     +----------+    +----------+         +----------+
     |RFID—RC522|    |RFID—RC522|         |RFID—RC522|
@@ -39,15 +47,52 @@ Môi trường xung quanh: hệ thống nhận biết đồ vật cần hoạt �
           +-------------USB Hub----------------+
                              |
                              |
-    +--------+        +------+-----+       +-----------------+
-    |Màn hình|--------|  Computer  |-------|Các nút tương tác|
-    +--------+        +------------+       +-----------------+
+    +--------+        +------+-----+       +---------+
+    | Screen |--------|  Computer  |-------| Buttons |
+    +--------+        +------------+       +---------+
 
-Using one Arduino per card reader maybe overkilled. But this system is very compact, modulable and accident/error-proof (from both human and environment).
+Using one Arduino per card reader maybe overkilled. But this system is very compact and modulable enough (add/remove readers at any time). Buttons are only there to start the game.
 
-### Alternative design #1
+Details of SPI connection between RC522 and Arduino Uno:
 
-(for reference only)
+    MFRC522 Reader             Arduino
+    Signal          Pin            Pin
+    --------------------------------------
+    RST/Reset       RST              9
+    SPI SS          SDA(SS)         10
+    SPI MOSI        MOSI            11
+    SPI MISO        MISO            12
+    SPI SCK         SCK             13
+    power           VCC           3.3V
+    ground          GND            GND
+
+<figure>
+<img src="img/soldering_rc522.jpeg" width=50% />
+<figcaption>Box breakout</figcaption>
+</figure>
+
+<figure>
+<img src="img/encapsulated.jpeg" width=50% />
+<figcaption>Finished box</figcaption>
+</figure>
+
+### Code setup
+
+* Install the MFRC522 library with Arduino IDE;
+* Then load the `.ino` sketch into Arduino boards, with a **different `reader_uid`** for each board;
+* Verify that on PC side you have python 3;
+* Install dependencies: `pip install -r requirements.txt`.
+
+## Run
+
+* In one terminal, run `python webserver_mockup.py` (no need if run with [this game](https://github.com/quantranfr/SortingGame))
+* In another terminal, run `python readSerial.py`
+
+## Other designs for consideration
+
+There may be some concerns with the Arduino Uno or Nano using CH340 chip. On some defect boards, the serial port doesn't always respond. Therefore in the future we should consider other design not using USB serial ports.
+
+Alternative design No.1 (very cumbersome):
 
     +----------+    +----------+         +----------+
     |RFID—RC522|    |RFID—RC522|         |RFID—RC522|
@@ -63,17 +108,14 @@ Using one Arduino per card reader maybe overkilled. But this system is very comp
           |               |                    |
           +---------------+--+-----------------+
                              |
-                     I2C level shifter
+                      I2C multiplexer
                              |
     +--------+        +------+-----+       +-----------------+
-    |Màn hình|--------|Raspberry Pi|-------|Các nút tương tác|
+    | Screen |--------|     Pi     |-------| Buttons |
     +--------+        +------------+       +-----------------+
 
-The I2C level shifter is cheaper than the USB hub of the main design, but the overall cable management will be cumbersome.
 
-### Alternative design #2
-
-(for reference only)
+Alternative design #2 (cheap, but have to drill a hole in NFC readers to make it work in I2C mode):
 
     +----------+    +----------+         +----------+
     |RFID—RC522|    |RFID—RC522|         |RFID—RC522|
@@ -85,83 +127,6 @@ The I2C level shifter is cheaper than the USB hub of the main design, but the ov
                              |
                       I2C multiplexer
                              |
-    +--------+        +------+-----+       +-----------------+
-    |Màn hình|--------|Raspberry Pi|-------|Các nút tương tác|
-    +--------+        +------------+       +-----------------+
-
-This is the cheapest solution, but price is its only advantage. There are many inconvenients:
-
-* MFRC522 cards need to be tweaked (drilled) to work in I2C mode.
-* Both 8 and 16-way I2C multiplexers are not available in Vietnam in this moment.
-* The cable management is still cumbersome.
-
-## Interaction diagram
-
-Sơ đồ quy trình hoạt động sau thể hiện các hành vi của người chơi và các thiết bị kể trên:
-
-![](img/processus.png)
-
-In the above image, "Pi" can be replaced by any computer.
-
-# Actual implementation
-
-## Encapsulating Arduino and MFRC522
-
-We want to encapsulate Arduino and MFRC522 cards into a solid box. The connection between the two is as followed:
-
-       MFRC522 Reader          Arduino Uno
-    Signal          Pin            Pin
-    --------------------------------------
-    RST/Reset       RST              9
-    SPI SS          SDA(SS)         10
-    SPI MOSI        MOSI            11
-    SPI MISO        MISO            12
-    SPI SCK         SCK             13
-    power           VCC           3.3V
-    ground          GND            GND            
-
-Here are the steps to encapsulate Arduino and MRFC522 into a 10.3x6.8x3.1cm box:
-
-<figure>
-<img src="img/soldering_arduino.jpeg" />
-<figcaption>Soldering on Arduino side</figcaption>
-</figure>
-
-<figure>
-<img src="img/soldering_rc522.jpeg" />
-<figcaption>Soldering on MFRC522 side</figcaption>
-</figure>
-
-<figure>
-<img src="img/side_view.jpeg" />
-<figcaption>Attach Arduino to the box by "cọc đồng"</figcaption>
-</figure>
-
-<figure>
-<img src="img/encapsulated.jpeg" />
-<figcaption>Finished box</figcaption>
-</figure>
-
-## Arduino sketch
-
-Install the MFRC522 library with Arduino IDE. Then load the .ino sketch into the reader ("reader" here means the box Arduino+MFRC522 described earlier).
-
-Output format: \<reader UID\>:\<card UID\>
-
-NB. Part of the sketch, such as the reader ID, should be customized for each reader.
-
-## Python script
-
-There is a `requirements.txt` file to be `pip install`.
-
-Run the `.py` script and follow the steps. The script will detect automatically serial ports to be used.
-
-# Observation
-
-## About Arduino Nano
-
-Arduino Nano is interesting thank to its form factor, but currently I have bad experience with how the it handles the serial ports: it simply doesn't always respond (or maybe it's just the NFC reader? I will need to test more).
-
-Wiring for reference:
-
-![](img/connection_with_nano.png)
+    +--------+        +------+-----+       +---------+
+    | Screen |--------|     Pi     |-------| Buttons |
+    +--------+        +------------+       +---------+
