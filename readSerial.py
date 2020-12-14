@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+
 # This script work with serial devices emitting one line of text at a time (Serial.println), at 9600 baud rate,
-# and send messages to a websocket server. There is a mockup websocket server in the same repository.
+# and send messages to a websocket client. Type
+#     python -m websockets ws://127.0.0.1:9080
+# in a terminal to simulate a websocket client
 #
 # Input (from serial ports, per line):
 #   <readerID>:<cardID>
@@ -13,7 +17,7 @@
 #   * robust:
 #
 #     * filter faulty messages where 1 same card can be on 2 different readers
-#     * have to receive 3 times nothing from the reader to consider that there's no card. Actually, this is one of the most important HYPERPARAMETER of this script. Should it be change if:
+#     * have to receive 2 times nothing from the reader to consider that there's no card. Actually, this is one of the most important HYPERPARAMETER of this script. Should it be change if:
 #
 #       * add or substract overhead (time to process each loop, or add/remove readers).
 #       * modify the loop's delay in the corresponding Arduino sketch
@@ -25,18 +29,7 @@ import asyncio
 import websockets
 from collections import defaultdict
 
-current_reader = defaultdict(str) # get the readerID from port name
-last_content = defaultdict(str) # last received (or not) content
-nb_empty = defaultdict(int) # if receive over, say, 4 times raw empty content, then consider the card to have been removed, then reset the counter
-current_card = defaultdict(str) # current card (inferred)
-ws_sendtime = 0 # last time a message was sent via websocket, keep track of how frequently a message should be sent
-last_message = "" # last message sent over websocket, get rid of sending the same message
-
-async def send(message):
-    uri = "ws://localhost:9080"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send(message)
-        print(f"ws> {message}")
+devices = [] # list of Serial's devices
 
 def get_port():
     """
@@ -55,28 +48,22 @@ def get_port():
     if not len(ports):
         raise IOError("No device detected. Abort.")
 
-    # choice(s) of serial devices
-    print('Available serial ports are:')
+    print('Hearing from:')
     for i, port in enumerate(ports):
         print(f'{i+1}. {port}')
-    iports = map(int, input('Which port(s) do you want to hear from (space separated): ').split()) # 1 base
 
-    try:
-        return [ports[iport-1] for iport in iports]
-    except IndexError:
-        raise ValueError("wrong choice")
+    return ports
 
-if __name__ == "__main__":
-    try:
-        ports=get_port()
-    except (IOError, ValueError, OSError) as e:
-        print(e)
-        sys.exit(1)
+async def handler(websocket, path):
+    global devices
 
-    if not len(ports):
-        sys.exit(0)
+    current_reader = defaultdict(str) # get the readerID from port name
+    last_content = defaultdict(str)   # last received (or not) content
+    nb_empty = defaultdict(int)       # if receive over, say, 4 times raw empty content,
+                                      # then consider the card to have been removed, then reset the counter
+    current_card = defaultdict(str)   # current card (inferred)
+    last_message = ""                 # last message sent over websocket, get rid of sending the same message
 
-    devices = [Serial(port, 9600, timeout=0.1) for port in ports]
     while True:
         for device in devices:
 
@@ -89,7 +76,7 @@ if __name__ == "__main__":
                     if current_card[device.name] != "":
                         nb_empty[device.name] += 1 # increment only if before there was a card
 
-                        if nb_empty[device.name] > 2: # the card should be not there any more
+                        if nb_empty[device.name] > 1: # HYPERPARAMETER TO BE TUNED
                             current_card[device.name] = "" # remove the card
                             nb_empty[device.name] = 0 # reinit the counter
             else:
@@ -98,15 +85,31 @@ if __name__ == "__main__":
 
             last_content[device.name] = s
 
-        if time.time() - ws_sendtime > 0.5: # consider to send a message only after some time
-            ws_sendtime = time.time()
-            
-            # send only if there is no same card on 2 different readers (user moves too fast)
-            current_cards = [current_card[device.name] for device in devices if current_card[device.name] != ""]
-            if len(current_cards) == len(set(current_cards)):
-                message = ";".join([current_reader[device.name]+":"+current_card[device.name] for device in devices if current_card[device.name] != ""])
-                if  message != last_message:
-                    asyncio.get_event_loop().run_until_complete(send(message))
-                    last_message = message
+        # send only if there is no same card on 2 different readers (user moves too fast)
+        current_cards = [current_card[device.name] for device in devices if current_card[device.name] != ""]
+        if len(current_cards) == len(set(current_cards)):
+            message = ";".join([current_reader[device.name]+":"+current_card[device.name] for device in devices if current_card[device.name] != ""])
+            if  message != last_message:
+                last_message = message
+                await websocket.send(message)
+                print("> ", message)
 
-        time.sleep(0.01)
+        time.sleep(0.5) # HYPERPARAMETER TO BE TUNED
+
+
+if __name__ == "__main__":
+    try:
+        ports=get_port()
+    except (IOError, OSError) as e:
+        print(e)
+        sys.exit(1)
+
+    if not len(ports):
+        sys.exit(0)
+
+    devices = [Serial(port, 9600, timeout=0.1) for port in ports]
+
+    start_server = websockets.serve(handler, "localhost", 9080)
+
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()

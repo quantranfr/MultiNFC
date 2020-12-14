@@ -85,8 +85,7 @@ Details of SPI connection between RC522 and Arduino Uno:
 
 ## Run
 
-* In one terminal, run `python webserver_mockup.py` (no need if run with [this game](https://github.com/quantranfr/SortingGame))
-* In another terminal, run `python readSerial.py`
+* In a terminal, run `python readSerial.py`
 
 ## Other designs for consideration
 
